@@ -90,7 +90,7 @@ namespace ifd {
 		
 		return ret;
 	}
-	bool PathBox(const char* label, std::filesystem::path& path, char* pathBuffer, ImVec2 size_arg) {
+	bool PathBox(const char* label, filesystem::path& path, char* pathBuffer, ImVec2 size_arg) {
 		ImGuiWindow* window = ImGui::GetCurrentWindow();
 		if (window->SkipItems)
 			return false;
@@ -165,7 +165,7 @@ namespace ifd {
 							newPath += "/";
 #endif
 					}
-					path = std::filesystem::u8path(newPath);
+					path = filesystem::u8path(newPath);
 					ret = true;
 				}
 				anyOtherHC |= ImGui::IsItemHovered() | ImGui::IsItemClicked();
@@ -209,8 +209,8 @@ namespace ifd {
 			}
 			if (ImGui::InputTextEx("##pathbox_input", "", pathBuffer, 1024, size_arg, ImGuiInputTextFlags_EnterReturnsTrue)) {
 				std::string tempStr(pathBuffer);
-				if (std::filesystem::exists(tempStr))
-					path = std::filesystem::u8path(tempStr); 
+				if (filesystem::exists(tempStr))
+					path = filesystem::u8path(tempStr); 
 				ret = true;
 			}
 			if (!skipActiveCheck && !ImGui::IsItemActive())
@@ -327,11 +327,11 @@ namespace ifd {
 		return ret;
 	}
 
-	FileDialog::FileData::FileData(const std::filesystem::path& path) {
+	FileDialog::FileData::FileData(const filesystem::path& path) {
 		std::error_code ec;
 		Path = path;
-		IsDirectory = std::filesystem::is_directory(path, ec);
-		Size = std::filesystem::file_size(path, ec);
+		IsDirectory = filesystem::is_directory(path, ec);
+		Size = filesystem::file_size(path, ec);
 
 		struct stat attr;
 		stat(path.u8string().c_str(), &attr);
@@ -361,7 +361,7 @@ namespace ifd {
 		m_previewLoader = nullptr;
 		m_previewLoaderRunning = false;
 
-		m_setDirectory(std::filesystem::current_path(), false);
+		m_setDirectory(filesystem::current_path(), false);
 
 		// favorites are available on every OS
 		FileTreeNode* quickAccess = new FileTreeNode("Quick Access");
@@ -388,7 +388,7 @@ namespace ifd {
 		// This PC
 		FileTreeNode* thisPC = new FileTreeNode("This PC");
 		thisPC->Read = true;
-		if (std::filesystem::exists(userPath + L"3D Objects"))
+		if (filesystem::exists(userPath + L"3D Objects"))
 			thisPC->Children.push_back(new FileTreeNode(userPath + L"3D Objects"));
 		thisPC->Children.push_back(new FileTreeNode(userPath + L"Desktop"));
 		thisPC->Children.push_back(new FileTreeNode(userPath + L"Documents"));
@@ -412,23 +412,23 @@ namespace ifd {
 		if (pw) {
 			std::string homePath = "/home/" + std::string(pw->pw_name);
 			
-			if (std::filesystem::exists(homePath, ec))
+			if (filesystem::exists(homePath, ec))
 				quickAccess->Children.push_back(new FileTreeNode(homePath));
-			if (std::filesystem::exists(homePath + "/Desktop", ec))
+			if (filesystem::exists(homePath + "/Desktop", ec))
 				quickAccess->Children.push_back(new FileTreeNode(homePath + "/Desktop"));
-			if (std::filesystem::exists(homePath + "/Documents", ec))
+			if (filesystem::exists(homePath + "/Documents", ec))
 				quickAccess->Children.push_back(new FileTreeNode(homePath + "/Documents"));
-			if (std::filesystem::exists(homePath + "/Downloads", ec))
+			if (filesystem::exists(homePath + "/Downloads", ec))
 				quickAccess->Children.push_back(new FileTreeNode(homePath + "/Downloads"));
-			if (std::filesystem::exists(homePath + "/Pictures", ec))
+			if (filesystem::exists(homePath + "/Pictures", ec))
 				quickAccess->Children.push_back(new FileTreeNode(homePath + "/Pictures"));
 		}
 
 		// This PC
 		FileTreeNode* thisPC = new FileTreeNode("This PC");
 		thisPC->Read = true;
-		for (const auto& entry : std::filesystem::directory_iterator("/", ec)) {
-			if (std::filesystem::is_directory(entry, ec))
+		for (const auto& entry : filesystem::directory_iterator("/", ec)) {
+			if (filesystem::is_directory(entry, ec))
 				thisPC->Children.push_back(new FileTreeNode(entry.path().u8string()));
 		}
 		m_treeCache.push_back(thisPC);
@@ -460,7 +460,7 @@ namespace ifd {
 
 		m_parseFilter(filter);
 		if (!startingDir.empty())
-			m_setDirectory(std::filesystem::u8path(startingDir), false);
+			m_setDirectory(filesystem::u8path(startingDir), false);
 		else
 			m_setDirectory(m_currentDirectory, false); // refresh contents
 
@@ -484,7 +484,7 @@ namespace ifd {
 
 		m_parseFilter(filter);
 		if (!startingDir.empty())
-			m_setDirectory(std::filesystem::u8path(startingDir), false);
+			m_setDirectory(filesystem::u8path(startingDir), false);
 		else
 			m_setDirectory(m_currentDirectory, false); // refresh contents
 
@@ -513,8 +513,8 @@ namespace ifd {
 	void FileDialog::Close()
 	{
 		m_currentKey.clear();
-		m_backHistory = std::stack<std::filesystem::path>();
-		m_forwardHistory = std::stack<std::filesystem::path>();
+		m_backHistory = std::stack<filesystem::path>();
+		m_forwardHistory = std::stack<filesystem::path>();
 
 		// clear the tree
 		for (auto fn : m_treeCache) {
@@ -554,7 +554,7 @@ namespace ifd {
 		if (std::count(m_favorites.begin(), m_favorites.end(), path) > 0)
 			return;
 
-		if (!std::filesystem::exists(std::filesystem::u8path(path)))
+		if (!filesystem::exists(filesystem::u8path(path)))
 			return;
 
 		m_favorites.push_back(path);
@@ -567,7 +567,7 @@ namespace ifd {
 			}
 	}
 	
-	void FileDialog::m_select(const std::filesystem::path& path, bool isCtrlDown)
+	void FileDialog::m_select(const filesystem::path& path, bool isCtrlDown)
 	{
 		bool multiselect = isCtrlDown && m_isMultiselect;
 
@@ -608,11 +608,11 @@ namespace ifd {
 		
 		if (hasResult) {
 			if (!m_isMultiselect || m_selections.size() <= 1) {
-				std::filesystem::path path = std::filesystem::u8path(filename);
+				filesystem::path path = filesystem::u8path(filename);
 				if (path.is_absolute()) m_result.push_back(path);
 				else m_result.push_back(m_currentDirectory / path);
 				if (m_type == IFD_DIALOG_DIRECTORY || m_type == IFD_DIALOG_FILE) {
-					if (!std::filesystem::exists(m_result.back())) {
+					if (!filesystem::exists(m_result.back())) {
 						m_result.clear();
 						return false;
 					}
@@ -623,7 +623,7 @@ namespace ifd {
 					if (sel.is_absolute()) m_result.push_back(sel);
 					else m_result.push_back(m_currentDirectory / sel);
 					if (m_type == IFD_DIALOG_DIRECTORY || m_type == IFD_DIALOG_FILE) {
-						if (!std::filesystem::exists(m_result.back())) {
+						if (!filesystem::exists(m_result.back())) {
 							m_result.clear();
 							return false;
 						}
@@ -698,7 +698,7 @@ namespace ifd {
 		}
 	}
 
-	void* FileDialog::m_getIcon(const std::filesystem::path& path)
+	void* FileDialog::m_getIcon(const filesystem::path& path)
 	{
 #ifdef _WIN32
 		if (m_icons.count(path.u8string()) > 0)
@@ -711,7 +711,7 @@ namespace ifd {
 
 		DWORD attrs = 0;
 		UINT flags = SHGFI_ICON | SHGFI_LARGEICON;
-		if (!std::filesystem::exists(path, ec)) {
+		if (!filesystem::exists(path, ec)) {
 			flags |= SHGFI_USEFILEATTRIBUTES;
 			attrs = FILE_ATTRIBUTE_DIRECTORY;
 		}
@@ -768,7 +768,7 @@ namespace ifd {
 
 		std::error_code ec;
 		int iconID = 1;
-		if (std::filesystem::is_directory(path, ec))
+		if (filesystem::is_directory(path, ec))
 			iconID = 0;
 
 		// check if icon is already loaded
@@ -909,7 +909,7 @@ namespace ifd {
 		delete node;
 		node = nullptr;
 	}
-	void FileDialog::m_setDirectory(const std::filesystem::path& p, bool addHistory)
+	void FileDialog::m_setDirectory(const filesystem::path& p, bool addHistory)
 	{
 		bool isSameDir = m_currentDirectory == p;
 
@@ -920,7 +920,7 @@ namespace ifd {
 #ifdef _WIN32
 		// drives don't work well without the backslash symbol
 		if (p.u8string().size() == 2 && p.u8string()[1] == ':')
-			m_currentDirectory = std::filesystem::u8path(p.u8string() + "\\");
+			m_currentDirectory = filesystem::u8path(p.u8string() + "\\");
 #endif
 
 		m_clearIconPreview();
@@ -952,8 +952,8 @@ namespace ifd {
 		}
 		else {
 			std::error_code ec;
-			if (std::filesystem::exists(m_currentDirectory, ec))
-				for (const auto& entry : std::filesystem::directory_iterator(m_currentDirectory, ec)) {
+			if (filesystem::exists(m_currentDirectory, ec))
+				for (const auto& entry : filesystem::directory_iterator(m_currentDirectory, ec)) {
 					FileData info(entry.path());
 
 					// skip files when IFD_DIALOG_DIRECTORY
@@ -1066,9 +1066,9 @@ namespace ifd {
 		if (FolderNode(displayName.c_str(), (ImTextureID)m_getIcon(node->Path), isClicked)) {
 			if (!node->Read) {
 				// cache children if it's not already cached
-				if (std::filesystem::exists(node->Path, ec))
-					for (const auto& entry : std::filesystem::directory_iterator(node->Path, ec)) {
-						if (std::filesystem::is_directory(entry, ec))
+				if (filesystem::exists(node->Path, ec))
+					for (const auto& entry : filesystem::directory_iterator(node->Path, ec)) {
+						if (filesystem::is_directory(entry, ec))
 							node->Children.push_back(new FileTreeNode(entry.path().u8string()));
 					}
 				node->Read = true;
@@ -1124,7 +1124,7 @@ namespace ifd {
 					ImGui::SameLine();
 					if (ImGui::Selectable(filename.c_str(), isSelected, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick)) {
 						std::error_code ec;
-						bool isDir = std::filesystem::is_directory(entry.Path, ec);
+						bool isDir = filesystem::is_directory(entry.Path, ec);
 
 						if (ImGui::IsMouseDoubleClicked(0)) {
 							if (isDir) {
@@ -1175,7 +1175,7 @@ namespace ifd {
 
 				if (FileIcon(filename.c_str(), isSelected, entry.HasIconPreview ? entry.IconPreview : (ImTextureID)m_getIcon(entry.Path), ImVec2(32 + 16 * m_zoom, 32 + 16 * m_zoom), entry.HasIconPreview, entry.IconPreviewWidth, entry.IconPreviewHeight)) {
 					std::error_code ec;
-					bool isDir = std::filesystem::is_directory(entry.Path, ec);
+					bool isDir = filesystem::is_directory(entry.Path, ec);
 
 					if (ImGui::IsMouseDoubleClicked(0)) {
 						if (isDir) {
@@ -1222,7 +1222,7 @@ namespace ifd {
 				ImGui::TextWrapped("Are you sure you want to delete %s?", data.Path.filename().u8string().c_str());
 				if (ImGui::Button("Yes")) {
 					std::error_code ec;
-					std::filesystem::remove_all(data.Path, ec);
+					filesystem::remove_all(data.Path, ec);
 					m_setDirectory(m_currentDirectory, false); // refresh
 					ImGui::CloseCurrentPopup();
 				}
@@ -1261,7 +1261,7 @@ namespace ifd {
 
 			if (ImGui::Button("OK")) {
 				std::error_code ec;
-				std::filesystem::create_directory(m_currentDirectory / std::string(m_newEntryBuffer), ec);
+				filesystem::create_directory(m_currentDirectory / std::string(m_newEntryBuffer), ec);
 				m_setDirectory(m_currentDirectory, false); // refresh
 				m_newEntryBuffer[0] = 0;
 				ImGui::CloseCurrentPopup();
@@ -1282,7 +1282,7 @@ namespace ifd {
 		ImGui::PushStyleColor(ImGuiCol_Button, 0);
 		if (noBackHistory) ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
 		if (ImGui::ArrowButtonEx("##back", ImGuiDir_Left, ImVec2(GUI_ELEMENT_SIZE, GUI_ELEMENT_SIZE), m_backHistory.empty() * ImGuiItemFlags_Disabled)) {
-			std::filesystem::path newPath = m_backHistory.top();
+			filesystem::path newPath = m_backHistory.top();
 			m_backHistory.pop();
 			m_forwardHistory.push(m_currentDirectory);
 
@@ -1293,7 +1293,7 @@ namespace ifd {
 		
 		if (noForwardHistory) ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
 		if (ImGui::ArrowButtonEx("##forward", ImGuiDir_Right, ImVec2(GUI_ELEMENT_SIZE, GUI_ELEMENT_SIZE), m_forwardHistory.empty() * ImGuiItemFlags_Disabled)) {
-			std::filesystem::path newPath = m_forwardHistory.top();
+			filesystem::path newPath = m_forwardHistory.top();
 			m_forwardHistory.pop();
 			m_backHistory.push(m_currentDirectory);
 
@@ -1307,7 +1307,7 @@ namespace ifd {
 				m_setDirectory(m_currentDirectory.parent_path());
 		}
 		
-		std::filesystem::path curDirCopy = m_currentDirectory;
+		filesystem::path curDirCopy = m_currentDirectory;
 		if (PathBox("##pathbox", curDirCopy, m_pathBuffer, ImVec2(-250, GUI_ELEMENT_SIZE)))
 			m_setDirectory(curDirCopy);
 		ImGui::SameLine();
