@@ -424,6 +424,7 @@ namespace ifd {
 				quickAccess->Children.push_back(new FileTreeNode(homePath + "/Pictures"));
 		}
 
+#if 0
 		// This PC
 		FileTreeNode* thisPC = new FileTreeNode("This PC");
 		thisPC->Read = true;
@@ -432,6 +433,7 @@ namespace ifd {
 				thisPC->Children.push_back(new FileTreeNode(entry.path().u8string()));
 		}
 		m_treeCache.push_back(thisPC);
+#endif
 #endif
 	}
 	FileDialog::~FileDialog() {
